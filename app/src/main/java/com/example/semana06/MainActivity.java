@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
     Button btnRegistra;
 
     EditText txtTitulo, txtAnio, txtSerie;
-    boolean boolNoExisteLibro = false;
 
 
     @Override
@@ -102,16 +101,12 @@ public class MainActivity extends AppCompatActivity {
                 Categoria objCategoria = new Categoria();
                 objCategoria.setIdCategoria(Integer.parseInt(idCategoria.trim()));
 
-                noExisteTitulo(titulo);
-
                 if (!titulo.matches("[\\p{L}\\p{M} ]{3,30}")) {
                     mensajeAlert("Ingrese el Título hasta 30 caracteres");
                 } else if (!anio.matches("[1-2][0-9]{3}")) {
                     mensajeAlert("Ingrese el Año de 4 dígitos");
                 } else if (!serie.matches("[A-Z]{3}[0-9]{8}")) {
                     mensajeAlert("Ingrese la Serie 3 caracteres y 8 números");
-                } else if (!boolNoExisteLibro){
-                    mensajeAlert("El libro " + titulo + " ya existe");
                 } else {
                     Libro objLibro = new Libro();
                     objLibro.setTitulo(titulo);
@@ -121,8 +116,7 @@ public class MainActivity extends AppCompatActivity {
                     objLibro.setCategoria(objCategoria);
                     objLibro.setFechaRegistro(FunctionUtil.getFechaActualStringDateTime());
                     objLibro.setEstado(1);
-
-                    registra(objLibro);
+                    registraValida(objLibro);
                 }
 
             }
@@ -131,9 +125,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    void noExisteTitulo(String titulo){
-        Call<List<Libro>> call  = serviceLibro.listaLibroPorTituloIgual(titulo);
-
+    void registraValida(Libro obj){
+        Call<List<Libro>> call  = serviceLibro.listaLibroPorTituloIgual(obj.getTitulo());
 
         call.enqueue(new Callback<List<Libro>>() {
             @Override
@@ -141,7 +134,9 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful()){
                     List<Libro> lstSalida = response.body();
                     if (lstSalida.isEmpty()){
-                        boolNoExisteLibro = true;
+                        registra(obj);
+                    }else{
+                        mensajeAlert("El libro " + obj.getTitulo() +" ya existe ");
                     }
                 }
             }
@@ -157,11 +152,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Pais>> call, Response<List<Pais>> response) {
                 if (response.isSuccessful()){
-                     List<Pais> lst =  response.body();
-                     for (Pais obj :lst){
-                         paises.add( obj.getIdPais() + " : " + obj.getNombre() );
-                     }
-                     adaptadorPais.notifyDataSetChanged();
+                    List<Pais> lst =  response.body();
+                    for (Pais obj :lst){
+                        paises.add( obj.getIdPais() + " : " + obj.getNombre() );
+                    }
+                    adaptadorPais.notifyDataSetChanged();
                 }
             }
             @Override
