@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     Button btnRegistra;
 
     EditText txtTitulo, txtAnio, txtSerie;
+    boolean boolNoExisteLibro = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String titulo = txtTitulo.getText().toString();
                 String anio = txtAnio.getText().toString();
-                String serie= txtSerie.getText().toString();
+                String serie = txtSerie.getText().toString();
                 String idPais = spnPais.getSelectedItem().toString().split(":")[0];
                 String idCategoria = spnCategoria.getSelectedItem().toString().split(":")[0];
 
@@ -100,19 +102,53 @@ public class MainActivity extends AppCompatActivity {
                 Categoria objCategoria = new Categoria();
                 objCategoria.setIdCategoria(Integer.parseInt(idCategoria.trim()));
 
-                Libro objLibro = new Libro();
-                objLibro.setTitulo(titulo);
-                objLibro.setAnio(Integer.parseInt(anio));
-                objLibro.setSerie(serie);
-                objLibro.setPais(objPais);
-                objLibro.setCategoria(objCategoria);
-                objLibro.setFechaRegistro(FunctionUtil.getFechaActualStringDateTime());
-                objLibro.setEstado(1);
+                noExisteTitulo(titulo);
 
-                registra(objLibro);
+                if (!titulo.matches("[\\p{L}\\p{M} ]{3,30}")) {
+                    mensajeAlert("Ingrese el Título hasta 30 caracteres");
+                } else if (!anio.matches("[1-2][0-9]{3}")) {
+                    mensajeAlert("Ingrese el Año de 4 dígitos");
+                } else if (!serie.matches("[A-Z]{3}[0-9]{8}")) {
+                    mensajeAlert("Ingrese la Serie 3 caracteres y 8 números");
+                } else if (!boolNoExisteLibro){
+                    mensajeAlert("El libro " + titulo + " ya existe");
+                } else {
+                    Libro objLibro = new Libro();
+                    objLibro.setTitulo(titulo);
+                    objLibro.setAnio(Integer.parseInt(anio));
+                    objLibro.setSerie(serie);
+                    objLibro.setPais(objPais);
+                    objLibro.setCategoria(objCategoria);
+                    objLibro.setFechaRegistro(FunctionUtil.getFechaActualStringDateTime());
+                    objLibro.setEstado(1);
+
+                    registra(objLibro);
+                }
+
             }
         });
 
+    }
+
+
+    void noExisteTitulo(String titulo){
+        Call<List<Libro>> call  = serviceLibro.listaLibroPorTituloIgual(titulo);
+
+
+        call.enqueue(new Callback<List<Libro>>() {
+            @Override
+            public void onResponse(Call<List<Libro>> call, Response<List<Libro>> response) {
+                if (response.isSuccessful()){
+                    List<Libro> lstSalida = response.body();
+                    if (lstSalida.isEmpty()){
+                        boolNoExisteLibro = true;
+                    }
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Libro>> call, Throwable t) {
+            }
+        });
     }
 
     void cargaPais(){
